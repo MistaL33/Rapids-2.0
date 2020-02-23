@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2018-2020 The Rapids developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -314,27 +315,27 @@ public:
         nToCheckBlockUpgradeMajority = 100; // 4 days
         nMinerThreads = 0;
         nLastPOWBlock = 200;
-        nPivxBadBlockTime = 1489001494; // Skip nBit validation of Block 259201 per PR #915
+        //nPivxBadBlockTime = 1489001494; // Skip nBit validation of Block 259201 per PR #915
         nPivxBadBlocknBits = 0x1e0a20bd; // Skip nBit validation of Block 201 per PR #915
-        nMaturity = 15;
+        nMaturity = 6;
         nStakeMinDepth = 100;
         nMasternodeCountDrift = 4;
-        nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
+        //nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
         nZerocoinStartHeight = INT_MAX;
         nZerocoinStartTime = INT_MAX;
         nBlockEnforceSerialRange = 1; //Enforce serial range starting this block
-        nBlockRecalculateAccumulators = 9908000; //Trigger a recalculation of accumulators
-        nBlockFirstFraudulent = 9891737; //First block that bad serials emerged
-        nBlockLastGoodCheckpoint = 9891730; //Last valid accumulator checkpoint
-        nBlockEnforceInvalidUTXO = 9902850; //Start enforcing the invalid UTXO's
+        //nBlockRecalculateAccumulators = 9908000; //Trigger a recalculation of accumulators
+        //nBlockFirstFraudulent = 9891737; //First block that bad serials emerged
+        //nBlockLastGoodCheckpoint = 9891730; //Last valid accumulator checkpoint
+        //nBlockEnforceInvalidUTXO = 9902850; //Start enforcing the invalid UTXO's
         nInvalidAmountFiltered = 0; //Amount of invalid coins filtered through exchanges, that should be considered valid
-        nBlockZerocoinV2 = 444020; //!> The block that zerocoin v2 becomes active
+        nBlockZerocoinV2 = 1; //!> The block that zerocoin v2 becomes active
         nEnforceNewSporkKey = 1566860400; //!> Sporks signed after Monday, August 26, 2019 11:00:00 PM GMT must use the new spork key
         nRejectOldSporkKey = 1569538800; //!> Reject old spork key after Thursday, September 26, 2019 11:00:00 PM GMT
         nBlockStakeModifierlV2 = 1214000;
-        nBIP65ActivationHeight = 851019;
+        nBIP65ActivationHeight = 1;
         // Activation height for TimeProtocolV2, Blocks V7 and newMessageSignatures
-        nBlockTimeProtocolV2 = 1347000;
+        nBlockTimeProtocolV2 = 1;
 
         // Public coin spend enforcement
         nPublicZCSpends = 1106100;
@@ -351,18 +352,49 @@ public:
         nSupplyBeforeFakeSerial = 0;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nTime = 1542153600;
+        genesis.nTime = 1542153600; // Default 1542153600 = 14.11.2018 - 01:00:00
         genesis.nNonce = 2465608;
         genesis.nBits = 0x1e0ffff0;
 
         hashGenesisBlock = genesis.GetHash();
         //assert(hashGenesisBlock == uint256("0x0000041e482b9b9691d98eefb48473405c0b8ec31b76df3797c74a78680ef818"));
+                     
+        //RPD Block: 0x00000d628fa6a8e91fe47554fa6ba00c7aa535fccd430b22214a71f9b7b344a7
+        //Height	Difficulty	Confirmations	Blocksize in KB	    Bits	    Nonce	    Timestamp
+        //0	        0.0002	    664583	        0.24	            1e0ffff0	2465608	    1542153600 - 14th Nov 2018 01:00:00
+        
+        
+        //Check and get Genesis-Block-Hash
+        if(genesis.GetHash() != uint256("0x"))
+        {
+        printf("Searching for genesis block...\n");
+        uint256 hashTarget;
+        hashTarget.SetCompact(genesis.nBits);
+        while(uint256(genesis.GetHash()) > uint256(hashTarget))
+        {
+            ++genesis.nNonce;
+            if (genesis.nNonce == 0)
+            {
+                printf("Testnet NONCE WRAPPED, incrementing time");
+                std::cout << std::string("Testnet NONCE WRAPPED, incrementing time:\n");
+                ++genesis.nTime;
+            }
+            if (genesis.nNonce % 10000 == 0)
+            {
+               printf("Testnet: nonce %08u: hash = %s \n", genesis.nNonce, genesis.GetHash().ToString().c_str());
+            }
+        }
+        printf("Testnet block.nTime = %u \n", genesis.nTime);
+        printf("Testnet block.nNonce = %u \n", genesis.nNonce);
+        printf("Testnet block.hashMerkleRoot: %s\n", genesis.hashMerkleRoot.ToString().c_str());
+        printf("Testnet block.GetHash = %s\n", genesis.GetHash().ToString().c_str());
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
-//        vSeeds.push_back(CDNSSeedData("fuzzbawls.pw", "pivx-testnet.seed.fuzzbawls.pw"));
-//        vSeeds.push_back(CDNSSeedData("fuzzbawls.pw", "pivx-testnet.seed2.fuzzbawls.pw"));
-//        vSeeds.push_back(CDNSSeedData("warrows.dev", "testnet.dnsseed.pivx.warrows.dev"));
+        //vSeeds.push_back(CDNSSeedData("fuzzbawls.pw", "pivx-testnet.seed.fuzzbawls.pw"));
+        //vSeeds.push_back(CDNSSeedData("fuzzbawls.pw", "pivx-testnet.seed2.fuzzbawls.pw"));
+        //vSeeds.push_back(CDNSSeedData("warrows.dev", "testnet.dnsseed.pivx.warrows.dev"));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 61);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 6);
@@ -375,13 +407,21 @@ public:
 
 
         convertSeed6(vFixedSeeds, pnSeed6_test, ARRAYLEN(pnSeed6_test));
-
-        fMiningRequiresPeers = true;
-        fAllowMinDifficultyBlocks = true;
+        
+        fMiningRequiresPeers = false;       // default true
+        fAllowMinDifficultyBlocks = false;
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
-        fMineBlocksOnDemand = false;
-        fTestnetToBeDeprecatedFieldRPC = true;
+        fMineBlocksOnDemand = true;     // default false
+        fSkipProofOfWorkCheck = false;      // default false
+        fTestnetToBeDeprecatedFieldRPC = false;
+        
+        //fMiningRequiresPeers = true;
+        //fAllowMinDifficultyBlocks = true;
+        //fDefaultConsistencyChecks = false;
+        //fRequireStandard = true;
+        //fMineBlocksOnDemand = false;
+        //fTestnetToBeDeprecatedFieldRPC = true;
 
         nPoolMaxTransactions = 2;
         nBudgetCycleBlocks = 144; //!< Ten cycles per day on testnet
